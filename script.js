@@ -1,21 +1,11 @@
 const API_BASE = "https://www.thesportsdb.com/api/v1/json/3";
 const ligasFavoritas = JSON.parse(localStorage.getItem("ligasFavoritas") || "[]");
 
-const exemploLigas = [
+const ligas = [
   "English Premier League",
   "Spanish La Liga",
   "Brasileirão Série A"
 ];
-
-async function buscarJogos(tipo, data, liga) {
-  const endpoint = tipo === "anterior"
-    ? `${API_BASE}/eventsday.php?d=${data}&l=${encodeURIComponent(liga)}`
-    : `${API_BASE}/eventsday.php?d=${data}&l=${encodeURIComponent(liga)}`;
-
-  const resp = await fetch(endpoint);
-  const dados = await resp.json();
-  return dados.events || [];
-}
 
 function formatarData(d) {
   return d.toISOString().split("T")[0];
@@ -43,6 +33,18 @@ function renderizarJogo(jogo, container) {
   container.appendChild(div);
 }
 
+async function buscarJogosPorDia(dataISO, liga) {
+  try {
+    const url = `${API_BASE}/eventsday.php?d=${dataISO}&l=${encodeURIComponent(liga)}`;
+    const resp = await fetch(url);
+    const dados = await resp.json();
+    return dados.events || [];
+  } catch (e) {
+    console.error("Erro ao buscar jogos:", e);
+    return [];
+  }
+}
+
 async function carregarJogos() {
   const hoje = new Date();
   const ultimosContainer = document.getElementById("ultimos-container");
@@ -52,20 +54,22 @@ async function carregarJogos() {
     const data = new Date(hoje);
     data.setDate(data.getDate() - i);
     const dataStr = formatarData(data);
-    for (const liga of exemploLigas) {
-      const jogos = await buscarJogos("anterior", dataStr, liga);
+
+    await Promise.all(ligas.map(async (liga) => {
+      const jogos = await buscarJogosPorDia(dataStr, liga);
       jogos.forEach(j => renderizarJogo(j, ultimosContainer));
-    }
+    }));
   }
 
   for (let i = 0; i < 7; i++) {
     const data = new Date(hoje);
     data.setDate(data.getDate() + i);
     const dataStr = formatarData(data);
-    for (const liga of exemploLigas) {
-      const jogos = await buscarJogos("proximo", dataStr, liga);
+
+    await Promise.all(ligas.map(async (liga) => {
+      const jogos = await buscarJogosPorDia(dataStr, liga);
       jogos.forEach(j => renderizarJogo(j, proximosContainer));
-    }
+    }));
   }
 }
 
