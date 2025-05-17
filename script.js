@@ -1,4 +1,4 @@
-const API_BASE = "https://www.thesportsdb.com/api/v1/json/1";
+const API_BASE = "https://www.thesportsdb.com/api/v1/json/3";
 const ligasFavoritas = JSON.parse(localStorage.getItem("ligasFavoritas") || "[]");
 
 const exemploLigas = [
